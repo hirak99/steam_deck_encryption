@@ -25,19 +25,18 @@ After encryption through this guide -
 - If you continue without entering the password -
   - Your device will still be usable; you can still log in to Steam, open KDE etc.
   - But everything you do will not be encrypted, and your data may be accessible by anyone who gets hold of your Deck.
-  - Your encrypted files will be present, but will be near impossible to open (assuming you chose a strong password).
 - If you forget your password -
   - Your encrypted data will not be recoverable.
-  - You can choose to delete the encrypted container and free up space. This essentially will make it identical to a device without encryption.
+  - You can choose to delete the encrypted container and free up space.
 
 ## Prior Work
 
 This project is very similar to the one here -
 https://github.com/Ethorbit/SteamDeck-SteamOS-Guides/tree/main/Encrypting-With-LUKS
 
-I am indebted to someone trying a similar approach before. I think there are certain aspects that inspired me, and showed that I am going in the right directions.
+I am indebted to the owner trying a similar approach before. I think there are certain aspects that inspired me, and showed that I am going in the right direction.
 
-I recommend going there to watch the video, because the video is very much representative of how this will end up. There are differences in the setup process however, and this workflow should be (a) possible to do without having to repartition and (b) more compatible with all future Steam updates.
+I recommend going there to watch the video, because the video is very much representative of how this will end up. There are differences in the setup process however. This workflow should be (a) possible to do without having to repartition and (b) more compatible with all future Steam updates.
 
 ## Features
 
@@ -75,7 +74,7 @@ Up until the point where you choose to erase data from unencrypted partition, th
   - I would recommend ~80-90% of the home directory space to be encrypted. You will need this much space to be freed.
   - If needed, uninstall some games (and re-install after encryption).
 
-# Setup Process - Follow This to Encrypt
+# Setup Process (follow this section to encrypt!)
 
 The set up process is generally safe. However, please understand the process first before going through it.
 
@@ -123,9 +122,9 @@ rsync -aAXHSv /home/deck/ /run/mount/deck_alt/
 
 Add these scripts to your current (non-encrypted) home -
 
-### ~/unlocker/runasroot.sh
+### Create ~/unlocker/runasroot.sh
 
-After you set this up, the idea is that every time you run `sudo ~/unlocker/runasroot.sh`, it will unlock the container and replace your `home/deck` with it.
+The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the container and replace your `home/deck` with an the encrypted filesystem.
 
 ```sh
 #!/bin/bash
@@ -188,9 +187,9 @@ ln -s $ORIGINAL_HOME/deck $(dirname $ORIGINAL_HOME)/_deck_orig
 systemctl restart sddm
 ```
 
-### ~/unlocker/unlock.sh
+### Create ~/unlocker/unlock.sh
 
-A script that can be added as a Steam shortcut, to show a terminal and unlock the container.
+This is to add a wrapper to show terminal on Steam deck, which you'll need to type the password in.
 
 ```sh
 #!/bin/bash
@@ -208,7 +207,7 @@ Add this to Steam as a shortcut.
 If everything works, when you start it, you will be asked for two passwords.
 First one is for your user, second for the encrypted drive. Once you pass both of them, Steam will restart using the newly encrypted home.
 
-### Confirm that it works!
+### Confirm that it works
 
 - Change something locally on your Steam, e.g. uninstall a game.
 - Start the unlock.sh and follow the instructions.
@@ -217,7 +216,7 @@ First one is for your user, second for the encrypted drive. Once you pass both o
 
 ## Step 3: Housekeeping
 
-If you complete Step 2 successfully, you're pretty much done - except you still have data left in the unencrypted partition. All you need now is to remove any critical information from there, and leave a minimal system.
+If you complete Step 2 successfully, you're pretty much done. You will now want to clean up original data left in unencrypted partition, and encrypt the swap.
 
 ### 3A. Log out and delete un-needed files from the unencrypted partition
 
@@ -267,9 +266,8 @@ If you are following the latest guide, you should already have them.
 
 Every time you get a SteamOS update, you need to do the following -
 - Run: `sudo upgrade-grub` from a console in Desktop mode before you unlock, and reboot.
-  - Explanation / why:
-    - Without this, unlocking will not succeed.
-    - This is needed to be able to mount LUKS encrypted devices, since we changed /etc/default/grub to remove blacklisted module tpm. Currently, that edit persists across SteamOS update; so no change is needed.
+  - Explanation why:
+    - Without this, unlocking will not succeed since SteamOS needs to load the tpm module.
     - (Development TODO: This step can be removed; I need to chage the script to check if upgrade is needed, and if so then do it.)
 
 # Conclusion: Status & Future
@@ -298,5 +296,7 @@ As a result, this way of encrypting may be a viable option for Steam to roll out
   - Assuming you are okay to lose your data, it is fairly trivial to delete the `/home/container` file to free up the space. Then if you want, you can continue to use it unencrypted, or go through the process again to re-encrypt.
 - Q: I don't want to read and understand technical details. Will you publish a script to do this automatically?
   - A: The whole process stated here should be fairly easy to automate. However, automation must be done carefully to make it as foolproof as possible. I may work on it, but I cannot give an ETA given that my day job is demanding.
+- Q: Should I also set up Security lock screen from Steam UI settings?
+  - A: Yes! The Steam UI's security features nicely complements encryption. If you don't have it on, anyone getting access of your Deck while it is powered on will be able to access to your unlocked data.
 - Q: I need feature X OR I have other questions.
-  - A: Please open an issue in this github project. Either myself or someone else from the community will try to help, as soon as possible.
+  - A: Please open an issue in this github project. Either myself or someone else from the community will try to help. Covnersely, if you see an issue which we can help with, you are encouraged to do so.
