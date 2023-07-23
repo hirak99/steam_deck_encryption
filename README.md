@@ -255,4 +255,11 @@ As a result, this way of encrypting may be a viable option for Steam to roll out
 # FAQ
 
 - Q: Is this full disk encryption?
-    - A: No. This only encrypts your `home/deck` directory.
+  - A: No. This only encrypts your `home/deck` directory.
+- Q: I set it up, but forgot the password. Can you help?
+  - A: There is no way to recover the data without password.
+  - Assuming you are okay to lose your data, it is fairly trivial to delete the `/home/container` file to free up the space. Then if you want, you can continue to use it unencrypted, or go through the process again to re-encrypt.
+- Q: I don't want to read and understand technical details. Will you publish a script to do this automatically?
+  - A: The whole process stated here should be fairly easy to automate. However, automation must be done carefully to make it as foolproof as possible. I may work on it, but I cannot give an ETA given that my day job is demanding.
+- Q: I need feature X OR I have other questions.
+  - A: Please open an issue in this github project. Either myself or someone else from the community will try to help, as soon as possible.
