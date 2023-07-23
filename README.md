@@ -157,10 +157,6 @@ fi
 # Unlock home.
 cat $PASSFILE | cryptsetup open /home/container deck_alt -
 
-# We're about to change /home/deck.
-# We can kill steam to be sure that we do not confuse it -
-kill -15 $(pidof steam)
-
 # Change /home/deck with the unlocked container.
 mount /dev/mapper/deck_alt /home/deck
 
