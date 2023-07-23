@@ -37,64 +37,62 @@ https://github.com/Ethorbit/SteamDeck-SteamOS-Guides/tree/main/Encrypting-With-L
 
 I am indebted to someone trying a similar approach before. I think there are certain aspects that inspired me, and showed that I am going in the right directions.
 
-I recommend going there to watch the video, because the video is very much representative of how this will end up. There are differences in the setup process however, and this workflow should be a little more safe in terms of setting up, and being able to get all future Steam updates as it does not interfere with the partitioning scheme.
+I recommend going there to watch the video, because the video is very much representative of how this will end up. There are differences in the setup process however, and this workflow should be (a) possible to do without having to repartition and (b) more compatible with all future Steam updates.
 
 ## Features
 
 1. Security: `/home/deck` will be fully encrypted.
 2. Security: Any inserted sd card (optionally) can be fully encrypted.
 3. **Convenience: Set up is seamless, does not need repartitioning**.
-4. Convenience + Functionality: This has no chance of breaking SteamOS updates.
+4. Convenience + Functionality: This should not break future SteamOS or SteamUI updates.
 5. Functionality: Allows btrfs. (Does not mean I'm recommending it; the decision should be yours to choose ext4 or btrfs. Having said that I think there are some nice benefits to btrfs; as well as some things to keep in mind.)
 6. Functionality: Requires password to decrypt. I personally prefer this over TPM, I think it's more secure.
 
 ## Known Issues
 
-1. **Issue: Needs a throwaway account**. It is needed so that we get access to Steam UI's on-screen keyboard, to type the password needed to mount the encrypted container.
-2. **Issue: Trim does not work yet** on the encrypted container. I think this is an issue which will be fixed with the new kernel, see https://github.com/ValveSoftware/SteamOS/issues/1101
+1. **Issue: Needs a throwaway account** so that we get access to Steam UI's on-screen keyboard, to type the password needed to mount the encrypted container.
+2. **Issue: Trim does not work yet** on the encrypted container. This may be an issue which will be fixed with the new kernel, see https://github.com/ValveSoftware/SteamOS/issues/1101
 
 
 # Before you start
 
 ## Disclaimer
 
-As with every project, things can go wrong. If you choose to follow this guide, please do this on your own responsibility.
+As with every DIY project, things can go wrong. If you choose to follow this guide, please do so on your own responsibility.
 
 ## General Notes on the Process
 
 That said, I think the steps outlined here are pretty safe.
 
-Up until the point where you choose to erase data from unencrypted partition, the process is very easily reversible if you know what you are doing.
+Up until the point where you choose to erase data from unencrypted partition, the process is very easily reversible.
 
 ## What you need
 
 - Either ssh access to your Steam Deck, or to connect it to a monitor and keyboard.
-  - Note: I personally prefer ssh. If you can get ssh access, it actually makes things a lot more convenient since you can always have a terminal open, even when Steam UI is running, without having to switch to Plasma / KDE. However, this guide should also work with Keyboard+Mouse+Display connected to your Deck.
-- A secondary / throwaway Steam account, which will not be protected.
+  - Note: I personally prefer ssh. It is more convenient since you can always get a terminal open even when Steam UI is running, eliminating the need to switch to Plasma / KDE for edits. However, this guide doesn't need it and you should be fine with Keyboard+Mouse+Display connected to your Deck.
+- A secondary / throwaway Steam account (which will not be protected).
 - Free space to create encrypted container.
   - I would recommend ~80-90% of the home directory space to be encrypted. You will need this much space to be freed.
   - If needed, uninstall some games (and re-install after encryption).
 
-# Let's do it!
-
-## Setting it up
+# Setup Process - Follow This to Encrypt
 
 The set up process is generally safe. However, please understand the process first before going through it.
 
 ## Step 0: Unblacklist tpm
 
-1. Remove `blackist=tpm` from /etc/default/grub; this is needed to be able to use encryption with LUKS.
-2. Run `sudo update-grub`
+1. Remove `blackist=tpm` from /etc/default/grub. This is needed to be able to use encryption with LUKS.
+2. Run `sudo update-grub` and reboot.
 
-NOTE: Every time Steam OS updates, you will need to run only step 2 above. This is because Steam OS image appears to ship without
+NOTE: Every time Steam OS updates, you will need to run only step 2 above.
 
-## Step 1: Create encrypted container, and copy your home to it
+## Step 1: Create an encrypted container, and copy your home to it
 
-Use the code below to create a new container and copy
+Run the lines below as root.
+
+Either enter super user `sudo su -`, or prefix `sudo` to each of the lines as you execute them.
 
 ```sh
-# Run this as root.
-
 cd /home
 
 # Choose a size depending on your SSD.
@@ -121,11 +119,14 @@ mount /dev/mapper/deck_alt /run/mount/deck_alt
 rsync -aAXHSv /home/deck/ /run/mount/deck_alt/
 ```
 
-## Step 2: Set up the unlock script
+## Step 2: Set up the unlock scripts
 
 Add these scripts to your current (non-encrypted) home -
 
 ### ~/unlocker/runasroot.sh
+
+After you set this up, the idea is that every time you run `sudo ~/unlocker/runasroot.sh`, it will unlock the container and replace your `home/deck` with it.
+
 ```sh
 #!/bin/bash
 set -ueo pipefail
@@ -143,19 +144,21 @@ set -x
 readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # # Optionally decrypt sd card with the same password.
-# # You will need to write a script similar to this one.
+# # You will need to write a script similar to this one, and call it like the line below.
 # $SCRIPT_DIR/mount_sd_games.sh $PASSFILE
 
 # Unlock home.
 cat $PASSFILE | cryptsetup open /home/container deck_alt -
 
-# We can kill steam to be sure -
+# We're about to change /home/deck.
+# We can kill steam to be sure that we do not confuse it -
 kill -15 $(pidof steam)
 
-# This overrides the current mount.
+# Change /home/deck with the unlocked container.
 mount /dev/mapper/deck_alt /home/deck
 
-# Run optional user autostart script if present.
+# Run optional user ~/decrypt_startup.sh if present in the unlocked home.
+# This can be used to start your own services or carry out any maintainence on unlock.
 readonly OPTIONAL_STARTUP_SCRIPT=/home/deck/decrypt_startup.sh
 if [[ -f $OPTIONAL_STARTUP_SCRIPT ]]; then
   # Need to set a few variabls, otherwise systemctl --user does not work.
@@ -167,11 +170,10 @@ if [[ -f $OPTIONAL_STARTUP_SCRIPT ]]; then
   export DBUS_SESSION_BUS_ADDRESS="unix:path=${USER_XDG_DIR}/bus"
   $OPTIONAL_STARTUP_SCRIPT
 EOF
+  # Note: Do not indent the EOF line above!
 fi
 
-
-# Preserve a mount of the original directory.
-# This helps in being able to access and edit these files.
+# For convenience, keep the unencrypted home mounted in some location to maintain access to it.
 readonly ORIGINAL_HOME=/run/mount/_home_dirs_orig
 # See https://unix.stackexchange.com/questions/4426/access-to-original-contents-of-mount-point
 # Note: This must be done _after_ we mount the replacement and not before.
@@ -179,12 +181,14 @@ mkdir -p $ORIGINAL_HOME
 mount --bind /home $ORIGINAL_HOME
 ln -s $ORIGINAL_HOME/deck $(dirname $ORIGINAL_HOME)/_deck_orig
 
+# Restarts gamescope compositor and steam.
 systemctl restart sddm
 ```
 
-Reboot the steam deck.
-
 ### ~/unlocker/unlock.sh
+
+A script that can be added as a Steam shortcut, to show a terminal and unlock the container.
+
 ```sh
 #!/bin/bash
 # Add to steam as a shortcut.
@@ -201,21 +205,23 @@ Add this to Steam as a shortcut.
 If everything works, when you start it, you will be asked for two passwords.
 First one is for your user, second for the encrypted drive. Once you pass both of them, Steam will restart using the newly encrypted home.
 
-**Confirm that it works**
+### Confirm that it works!
 
-You can test that it is running on encrypted container by changing something, e.g. uninstall or install a game; which should appear to be reverted if you restart the device. It should come back if you unlock again.
+- Change something locally on your Steam, e.g. uninstall a game.
+- Start the unlock.sh and follow the instructions.
+- You should see Steam restart, and your uninstalled game is still there (because it restarts into the encrypted container where the game is still present).
 
 
 ## Step 3: Housekeeping
 
-If you complete Step 2 successfully, you're pretty much done - except you still have data left in the unencrypted partition. All you need now is to remove all critical information from there.
+If you complete Step 2 successfully, you're pretty much done - except you still have data left in the unencrypted partition. All you need now is to remove any critical information from there, and leave a minimal system.
 
 NOTE: Some of these are irreversible, so please be extra careful that you are doing it on the right partition.
 
-Do the following **before you decrypt**, since you want to delete old unencrypted data.
+Do the following **before you decrypt** -
 1. Delete your unencrypted data
-    - Delete `~/.var/app/*`
-    - Uninstall all installed games
+    - Delete `~/.var/app/*` which contains settings and authentication for apps you installed through Discover.
+    - Uninstall all installed games.
     - Remove bash history -
       - Add `HISTFILE=` to the end of `~/.bash_profile`
       - Remove `~/.bash_history`
