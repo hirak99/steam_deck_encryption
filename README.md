@@ -41,7 +41,7 @@ I recommend going there to watch the video, because the video is very much repre
 
 ## Features
 
-1. Security: `/home/deck` will be fully encrypted.
+1. Security: `/home/deck` and swapfile will be encrypted.
 2. Security: Any inserted sd card (optionally) can be fully encrypted.
 3. **Convenience: Set up is seamless, does not need repartitioning**.
 4. Convenience + Functionality: This should not break future SteamOS or SteamUI updates.
@@ -143,6 +143,13 @@ set -x
 
 readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+# Mount encrypted swap if it exists. See instructions later on creating it.
+if [[ -e /dev/mapper/swap ]]; then
+  swapoff -a
+  mkswap /dev/mapper/swap
+  swapon /dev/mapper/swap
+fi
+
 # # Optionally decrypt sd card with the same password.
 # # You will need to write a script similar to this one, and call it like the line below.
 # $SCRIPT_DIR/mount_sd_games.sh $PASSFILE
@@ -216,6 +223,8 @@ First one is for your user, second for the encrypted drive. Once you pass both o
 
 If you complete Step 2 successfully, you're pretty much done - except you still have data left in the unencrypted partition. All you need now is to remove any critical information from there, and leave a minimal system.
 
+### 3A. Log out and delete un-needed files from the unencrypted partition
+
 NOTE: Some of these are irreversible, so please be extra careful that you are doing it on the right partition.
 
 Do the following **before you decrypt** -
@@ -230,6 +239,33 @@ Do the following **before you decrypt** -
 4. You may need to add a link to the unlock script again.
 
 Reboot and verify decryption still works.
+
+### 3B. Encrypt the swapfile
+
+Encrypting the swap provides additional safety to prevent leaks, and is fairly easy to do.
+
+1. Add the following line to `/etc/crypttab` -
+```
+swap /home/swapfile /dev/urandom swap,cipher=aes-xts-plain64,size=512
+```
+
+2. (Optional) For additional safety, delete and recreate the swapfile.
+
+```sh
+sudo swapoff -a
+sudo rm /home/swapfile
+# You can also run these lines with a different size to change the swap size.
+sudo fallocate -l 1G /home/swapfile
+sudo chmod 600 /home/swapfile
+```
+
+3. Ensure that your unlock script has the lines on swap.
+
+If you are following the latest guide, you should already have them.
+
+4. Reboot, unlock, and confirm swap is active with `swapon -s`.
+
+**TIP: If you ever need to revert to unencrypted swap**, simply (1) delete the added line from /etc/crypttab _and_ (2) `swapoff -a`, (3) delete the /home/swapfile. Steam will recreate the swap on reboot.
 
 # Post Encryption
 
