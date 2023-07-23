@@ -15,7 +15,7 @@ In particular a malicious actor can get access to -
 
 Note: You an activate a security code (which you probably should if you haven't), but that does not encrypt the storage - and it is extremely easy for anyone to take it out and access your data directly through it.
 
-If you follow this guide through, your Steam deck will be more secure, and it will make it very difficult (if not impossible) for theives to get access to accoutns you have logged in to.
+If you follow this guide through, your Steam deck will be more secure, and it will make it very difficult (if not impossible) for theives to get access to accounts you have logged in to.
 
 ## What to expect after completion
 
@@ -41,7 +41,7 @@ I recommend going there to watch the video, because the video is very much repre
 
 ## Features
 
-1. Security: `/deck/home` will be fully encrypted.
+1. Security: `/home/deck` will be fully encrypted.
 2. Security: Any inserted sd card (optionally) can be fully encrypted.
 3. **Convenience: Set up is seamless, does not need repartitioning**.
 4. Convenience + Functionality: This has no chance of breaking SteamOS updates.
@@ -142,7 +142,7 @@ set -x
 
 readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# # Optionally decrypt sd card with the same passowrd.
+# # Optionally decrypt sd card with the same password.
 # # You will need to write a script similar to this one.
 # $SCRIPT_DIR/mount_sd_games.sh $PASSFILE
 
@@ -155,7 +155,6 @@ kill -15 $(pidof steam)
 # This overrides the current mount.
 mount /dev/mapper/deck_alt /home/deck
 
-# Run optional user autostart script if present.
 # Run optional user autostart script if present.
 readonly OPTIONAL_STARTUP_SCRIPT=/home/deck/decrypt_startup.sh
 if [[ -f $OPTIONAL_STARTUP_SCRIPT ]]; then
@@ -185,7 +184,7 @@ systemctl restart sddm
 
 Reboot the steam deck.
 
-### ~/unlocker/unclock.sh
+### ~/unlocker/unlock.sh
 ```sh
 #!/bin/bash
 # Add to steam as a shortcut.
@@ -255,7 +254,7 @@ As a result, this way of encrypting may be a viable option for Steam to roll out
 # FAQ
 
 - Q: Is this full disk encryption?
-  - A: No. This only encrypts your `home/deck` directory.
+  - A: No. This only encrypts your `/home/deck` directory.
 - Q: I set it up, but forgot the password. Can you help?
   - A: There is no way to recover the data without password.
   - Assuming you are okay to lose your data, it is fairly trivial to delete the `/home/container` file to free up the space. Then if you want, you can continue to use it unencrypted, or go through the process again to re-encrypt.
