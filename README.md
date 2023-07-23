@@ -15,7 +15,7 @@ In particular a malicious actor can get access to -
 
 Note: You an activate a security code (which you probably should if you haven't), but that does not encrypt the storage - and it is extremely easy for anyone to take it out and access your data directly through it.
 
-If you follow this guide through, your Steam deck will be more secure, and it will make it very difficult (if not impossible) for theives to get access to accoutns you have logged in to.
+If you follow this guide through, your Steam deck will be more secure, and it will make it very difficult (if not impossible) for theives to get access to accounts you have logged in to.
 
 ## What to expect after completion
 
@@ -142,7 +142,7 @@ set -x
 
 readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# # Optionally decrypt sd card with the same passowrd.
+# # Optionally decrypt sd card with the same password.
 # # You will need to write a script similar to this one.
 # $SCRIPT_DIR/mount_sd_games.sh $PASSFILE
 
@@ -155,7 +155,6 @@ kill -15 $(pidof steam)
 # This overrides the current mount.
 mount /dev/mapper/deck_alt /home/deck
 
-# Run optional user autostart script if present.
 # Run optional user autostart script if present.
 readonly OPTIONAL_STARTUP_SCRIPT=/home/deck/decrypt_startup.sh
 if [[ -f $OPTIONAL_STARTUP_SCRIPT ]]; then
@@ -185,7 +184,7 @@ systemctl restart sddm
 
 Reboot the steam deck.
 
-### ~/unlocker/unclock.sh
+### ~/unlocker/unlock.sh
 ```sh
 #!/bin/bash
 # Add to steam as a shortcut.
