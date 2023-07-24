@@ -112,7 +112,7 @@ tune2fs -m 1 /dev/mapper/deck_alt
 cryptsetup --allow-discards --persistent refresh /dev/mapper/deck_alt
 
 mkdir /run/mount/deck_alt  # Temporary one-time mount.
-chown deck:deck /run/mount/deck/alt
+chown deck:deck /run/mount/deck_alt
 mount /dev/mapper/deck_alt /run/mount/deck_alt
 
 rsync -aAXHSv /home/deck/ /run/mount/deck_alt/
