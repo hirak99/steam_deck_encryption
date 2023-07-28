@@ -9,25 +9,28 @@ Unlike all mobile devices of today (phones, laptops, tablets), the Steam Deck ha
 In particular a malicious actor can get access to -
 
 1. Your Steam account authentication.
-   - They can buy games (if you have funds or cards linked), play games as you, engage in cheating, and risk your account in other ways.
+   - They can buy games if you have funds or cards linked,
+   - impersonate you to scam your friends,
+   - engage in cheating, and risk your account in other ways.
 2. Your credentials.
-   - If you ever used a browser in KDE and logged in to online accounts, they may also be lost.
+   - If you ever used a browser in KDE and logged in to online accounts, they may also be compromised.
 
-Note: You an activate a security code (which you probably should if you haven't), but that does not encrypt the storage - and it is extremely easy for anyone to take it out and access your data directly through it.
+Note: You can (and should) activate the security lock inbuilt to Steam Deck's UI. But that does not encrypt the storage - and it is extremely easy for anyone to take the SSD or MMC out and access your data directly.
 
-If you follow this guide through, your Steam deck will be more secure, and it will make it very difficult (if not impossible) for theives to get access to accounts you have logged in to.
+If you follow this guide through, your Steam deck will be more secure, and it will make it very difficult (if not impossible) for bad actors to get access to accounts you have logged in to.
 
 ## What to expect after completion
 
 After encryption through this guide -
-- Every time you reboot or power off and restart, you will require to enter password to unlock.
-  - It is recommended that you decrypt with the password before doing anything, including logging in to play your games, or work on KDE (aka Desktop mode).
+- Every time you reboot, or power off and restart, you will require to enter a password to unlock the filesystem -
+  - Though you can continue without password (see next point), it is recommended that you always decrypt to load the encrypted container before using your device for convenience and safety.
 - If you continue without entering the password -
   - Your device will still be usable; you can still log in to Steam, open KDE etc.
-  - But everything you do will not be encrypted, and your data may be accessible by anyone who gets hold of your Deck.
+  - But your session will operate without encryption.
+  - And your data may be accessible by anyone who gets hold of your Deck afterwards.
 - If you forget your password -
   - Your encrypted data will not be recoverable.
-  - You can choose to delete the encrypted container and free up space.
+  - You can choose to delete the encrypted container and essentially revert to original state, or to re-encrypt.
 
 ## Prior Work
 
@@ -83,7 +86,7 @@ The set up process is generally safe. However, please understand the process fir
 1. Remove `blackist=tpm` from /etc/default/grub. This is needed to be able to use encryption with LUKS.
 2. Run `sudo update-grub` and reboot.
 
-NOTE: Every time Steam OS updates, you will need to run only step 2 above.
+NOTE: After you have done this once, every time Steam OS updates you will need to run only step 2 above.
 
 ## Step 1: Create an encrypted container, and copy your home to it
 
