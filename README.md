@@ -148,7 +148,7 @@ readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null 
 # Encrypt swap.
 # Note: After this is run once, swap will not mount for the unencrypted partition.
 # To revert, simply execute `mkswap /home/swapfile`.
-if [[ -e /dev/mapper/swap ]]; then
+if [[ ! -e /dev/mapper/swap ]]; then
   swapoff -a
   cryptsetup open /home/swapfile swap --type=plain --cipher=aes-xts-plain64 --key-file=/dev/urandom
   mkswap /dev/mapper/swap
