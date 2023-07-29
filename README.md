@@ -145,9 +145,12 @@ set -x
 
 readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# Mount encrypted swap if it exists. See instructions later on creating it.
+# Encrypt swap.
+# Note: After this is run once, swap will not mount for the unencrypted partition.
+# To revert, simply execute `mkswap /home/swapfile`.
 if [[ -e /dev/mapper/swap ]]; then
   swapoff -a
+  cryptsetup open /home/swapfile swap --type=plain --cipher=aes-xts-plain64 --key-file=/dev/urandom
   mkswap /dev/mapper/swap
   swapon /dev/mapper/swap
 fi
@@ -238,32 +241,25 @@ Do the following **before you decrypt** -
 
 Reboot and verify decryption still works.
 
-### 3B. Encrypt the swapfile
+### 3B. Notes on encrypted swap
 
-Encrypting the swap provides additional safety to prevent leaks, and is fairly easy to do.
+Swap will be encrypted when you unlock the deck.
 
-1. Add the following line to `/etc/crypttab` -
-```
-swap /home/swapfile /dev/urandom swap,cipher=aes-xts-plain64,size=512
-```
-
-2. (Optional) For additional safety, delete and recreate the swapfile.
+- For additional safety, consider deleting existing swap to remove any existing data in it, and recreate -
 
 ```sh
 sudo swapoff -a
 sudo rm /home/swapfile
-# You can also run these lines with a different size to change the swap size.
+# Note: 1G is the default swap size that Steam OS comes with.
+# If you want to use a different size, you can change it below.
 sudo fallocate -l 1G /home/swapfile
 sudo chmod 600 /home/swapfile
+
+# Then reboot.
+# You can verify that swap is active after reboot, by running `swapon -s`.
 ```
 
-3. Ensure that your unlock script has the lines on swap.
-
-If you are following the latest guide, you should already have them.
-
-4. Reboot, unlock, and confirm swap is active with `swapon -s`.
-
-**TIP: If you ever need to revert to unencrypted swap**, simply (1) delete the added line from /etc/crypttab _and_ (2) `swapoff -a`, (3) delete the /home/swapfile. Steam will recreate the swap on reboot.
+- Only if you ever revert encryption, run `sudo mkswap /home/swapfile` to let the unencrypted swapfile to be used again.
 
 # Post Encryption
 
