@@ -133,8 +133,6 @@ The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the co
 #!/bin/bash
 set -uexo pipefail
 
-readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
 # Encrypt swap.
 # Note: After this is run once, swap will not mount for the unencrypted partition.
 # To revert, simply execute `mkswap /home/swapfile`.
@@ -145,7 +143,7 @@ if [[ ! -e /dev/mapper/swap ]]; then
   swapon /dev/mapper/swap
 fi
 
-# Unlock home.
+# Unlock home. This will ask for the decryption password.
 cryptsetup open /home/container deck_alt -
 
 # Change /home/deck with the unlocked container.
