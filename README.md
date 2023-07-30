@@ -155,19 +155,28 @@ if [[ ! -e /dev/mapper/swap ]]; then
   swapon /dev/mapper/swap
 fi
 
-# # Optionally decrypt sd card with the same password.
-# # You will need to write a script similar to this one, and call it like the line below.
-# $SCRIPT_DIR/mount_sd_games.sh $PASSFILE
-
 # Unlock home.
 cat $PASSFILE | cryptsetup open /home/container deck_alt -
 
 # Change /home/deck with the unlocked container.
 mount /dev/mapper/deck_alt /home/deck
 
+# Run optional root autostart script if present.
+# This can be used for example to automatically unlock and mount sdcard with a keyfile.
+readonly OPTIONAL_STARTUP_ROOT=/home/deck/on_decrypt_root.sh
+if [[ -f $OPTIONAL_STARTUP_ROOT ]]; then
+  # For safety, ensure that user programs cannot write to this script.
+  if [[ "$(stat -L -c "%a %G %U" $OPTIONAL_STARTUP_ROOT)" != "744 root root" ]]; then
+    echo "Root startup file must be owned by root:root with mode 744."
+    sleep 20
+    exit -1
+  fi
+  $OPTIONAL_STARTUP_ROOT
+fi
+
 # Run optional user ~/decrypt_startup.sh if present in the unlocked home.
 # This can be used to start your own services or carry out any maintainence on unlock.
-readonly OPTIONAL_STARTUP_SCRIPT=/home/deck/decrypt_startup.sh
+readonly OPTIONAL_STARTUP_SCRIPT=/home/deck/on_decrypt_user.sh
 if [[ -f $OPTIONAL_STARTUP_SCRIPT ]]; then
   # Need to set a few variabls, otherwise systemctl --user does not work.
   # See https://askubuntu.com/questions/1007055/systemctl-edit-problem-failed-to-connect-to-bus
