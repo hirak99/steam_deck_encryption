@@ -131,17 +131,7 @@ The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the co
 
 ```sh
 #!/bin/bash
-set -ueo pipefail
-
-echo -n Password:
-read -s PASS
-echo
-
-readonly PASSFILE=$(mktemp /tmp/runasroot_XXXXXXXX)
-trap "rm -f $PASSFILE" EXIT
-echo $PASS > $PASSFILE
-
-set -x
+set -uexo pipefail
 
 readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
@@ -156,7 +146,7 @@ if [[ ! -e /dev/mapper/swap ]]; then
 fi
 
 # Unlock home.
-cat $PASSFILE | cryptsetup open /home/container deck_alt -
+cryptsetup open /home/container deck_alt -
 
 # Change /home/deck with the unlocked container.
 mount /dev/mapper/deck_alt /home/deck
