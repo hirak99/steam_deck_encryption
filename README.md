@@ -155,11 +155,12 @@ readonly OPTIONAL_STARTUP_ROOT=/home/deck/on_decrypt_root.sh
 if [[ -f $OPTIONAL_STARTUP_ROOT ]]; then
   # For safety, ensure that user programs cannot write to this script.
   if [[ "$(stat -L -c "%a %G %U" $OPTIONAL_STARTUP_ROOT)" != "744 root root" ]]; then
-    echo "Root startup file must be owned by root:root with mode 744."
-    sleep 20
-    exit -1
+    echo "$OPTIONAL_STARTUP_ROOT exists but is not owned by root:root with mode 744."
+    echo "Skipping execution, continuing in a few seconds..."
+    sleep 5
+  else
+    $OPTIONAL_STARTUP_ROOT || true
   fi
-  $OPTIONAL_STARTUP_ROOT
 fi
 
 # Run optional user ~/decrypt_startup.sh if present in the unlocked home.
@@ -169,7 +170,7 @@ if [[ -f $OPTIONAL_STARTUP_SCRIPT ]]; then
   # Need to set a few variabls, otherwise systemctl --user does not work.
   # See https://askubuntu.com/questions/1007055/systemctl-edit-problem-failed-to-connect-to-bus
   USER_XDG_DIR=/run/user/1000
-  sudo su - deck <<EOF
+  sudo su - deck <<EOF || true
   set -x
   export XDG_RUNTIME_DIR=${USER_XDG_DIR}
   export DBUS_SESSION_BUS_ADDRESS="unix:path=${USER_XDG_DIR}/bus"
