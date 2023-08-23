@@ -52,9 +52,17 @@ I recommend going there to watch the video, because the video is very much repre
 
 ## Known Issues
 
-1. **Issue: Needs a throwaway account** so that we get access to Steam UI's on-screen keyboard, to type the password needed to mount the encrypted container.
-2. ~~**Issue: Trim does not work yet** on the encrypted container. This may be an issue which will be fixed with the new kernel, see https://github.com/ValveSoftware/SteamOS/issues/1101~~
-
+1. **Issue: Needs a throwaway account** so that we get access to Steam UI's
+   on-screen keyboard, to type the password needed to mount the encrypted
+   container.
+2. ~~**Issue: Trim does not work yet** on the encrypted container. This may be
+   an issue which will be fixed with the new kernel, see
+   https://github.com/ValveSoftware/SteamOS/issues/1101~~
+3. **Issue: User services and services with binary in home do not start**. As a
+   workaround, the services can be started using the `~/home/on_decrypt_user.sh`
+   and `~/home/on_decrypt_root.sh` (e.g. plugin_loader). A possible future
+   solution could be to retry all the failed services after the container is
+   decrypted.
 
 # Before you start
 
