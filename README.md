@@ -53,7 +53,7 @@ I recommend going there to watch the video, because the video is very much repre
 ## Known Issues
 
 1. **Issue: Needs a throwaway account** so that we get access to Steam UI's on-screen keyboard, to type the password needed to mount the encrypted container.
-2. **Issue: Trim does not work yet** on the encrypted container. This may be an issue which will be fixed with the new kernel, see https://github.com/ValveSoftware/SteamOS/issues/1101
+2. ~~**Issue: Trim does not work yet** on the encrypted container. This may be an issue which will be fixed with the new kernel, see https://github.com/ValveSoftware/SteamOS/issues/1101~~
 
 
 # Before you start
@@ -144,7 +144,7 @@ if [[ ! -e /dev/mapper/swap ]]; then
 fi
 
 # Unlock home. This will ask for the decryption password.
-cryptsetup open /home/container deck_alt -
+cryptsetup open /home/container deck_alt - --allow-discards
 
 # Change /home/deck with the unlocked container.
 mount /dev/mapper/deck_alt /home/deck
