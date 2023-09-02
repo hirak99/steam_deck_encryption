@@ -305,3 +305,12 @@ As a result, this way of encrypting may be a viable option for Steam to roll out
   - A: Yes! The Steam UI's security features nicely complements encryption. If you don't have it on, anyone getting access of your Deck while it is powered on will be able to access to your unlocked data.
 - Q: I need feature X OR I have other questions.
   - A: Please open an issue in this github project. Either myself or someone else from the community will try to help. Covnersely, if you see an issue which we can help with, you are encouraged to do so.
+
+## TroubleShooting
+
+- After a Steam Update, unlocking does not succeed.
+  - You likely see the following error: `device-mapper: reload ioctl on swap
+  (254:0) failed: Invalid argument`
+  -  Run `sudo update-grub`, and reboot to resolve. More info: The error is
+     likely caused because the image after an update does not have tpm. See
+     "Unblacklist tpm" for more details.
