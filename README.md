@@ -141,6 +141,35 @@ The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the co
 #!/bin/bash
 set -uexo pipefail
 
+#Check TPM status
+if grep -q 'module_blacklist=tpm' /etc/default/grub; then
+        echo 'TPM module is blacklisted, editing /etc/default/grub .'
+        sed -i 's/blacklist=tpm //g' /etc/default/grub
+        if grep -q 'module_blacklist=tpm' /etc/default/grub; then
+        	echo 'TPM module still blacklisted, something went wrong, backing out!'
+        	sleep 10
+        	exit 1
+        else
+        	echo 'GRUB config file modified successfully, updating bootloader...'
+        	update-grub
+        	echo 'GRUB updated, please reboot to apply the changes and re-run the unlock script.'
+        	sleep 10
+        	exit 1
+        fi
+else
+        echo 'TPM not blacklisted, the module should be enabled, verifying...'
+        if lsmod | grep -q "tpm"; then
+        	echo 'TPM already enabled, proceeding with unlock...'
+        else
+        	echo 'TPM missing, likely due to GRUB not being updated.'
+        	echo 'The module should not be blacklisted, updating GRUB...'
+        	update-grub
+        	echo 'GRUB updated, please reboot to apply the changes and re-run the unlock script.'
+        	sleep 10
+        	exit 1
+        fi
+fi
+
 # Encrypt swap.
 # Note: After this is run once, swap will not mount for the unencrypted partition.
 # To revert, simply execute `mkswap /home/swapfile`.
