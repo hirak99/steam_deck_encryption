@@ -141,33 +141,25 @@ The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the co
 #!/bin/bash
 set -uexo pipefail
 
-#Check TPM status
-if grep -q 'module_blacklist=tpm' /etc/default/grub; then
-        echo 'TPM module is blacklisted, editing /etc/default/grub .'
-        sed -i 's/blacklist=tpm //g' /etc/default/grub
-        if grep -q 'module_blacklist=tpm' /etc/default/grub; then
-        	echo 'TPM module still blacklisted, something went wrong, backing out!'
-        	sleep 10
-        	exit 1
-        else
-        	echo 'GRUB config file modified successfully, updating bootloader...'
-        	update-grub
-        	echo 'GRUB updated, please reboot to apply the changes and re-run the unlock script.'
-        	sleep 10
-        	exit 1
-        fi
-else
-        echo 'TPM not blacklisted, the module should be enabled, verifying...'
-        if lsmod | grep -q "tpm"; then
-        	echo 'TPM already enabled, proceeding with unlock...'
-        else
-        	echo 'TPM missing, likely due to GRUB not being updated.'
-        	echo 'The module should not be blacklisted, updating GRUB...'
-        	update-grub
-        	echo 'GRUB updated, please reboot to apply the changes and re-run the unlock script.'
-        	sleep 10
-        	exit 1
-        fi
+# Steam OS update will add tpm to module_blacklist, but that prevents encryption.
+# This block checks for it, and if present, automatically removes it and updates grub.
+readonly GRUBFILE=/etc/default/grub
+readonly TPM_BLACKLIST_REGEX='^\s*GRUB_CMDLINE_LINUX_DEFAULT\b.*\bmodule_blacklist=[^\s]*,?tpm,?\s*\b'
+if grep -E -q "${TPM_BLACKLIST_REGEX}" $GRUBFILE; then
+    echo "'tpm' module is blacklisted, editing ${GRUBFILE}."
+    cp ${GRUBFILE} ~deck/grub_original_backup
+    sed -E -i "/${TPM_BLACKLIST_REGEX}/"\
+'{h;s/^/# Modified from: /p;x;'\
+'s/(module_blacklist=)([^\s]*)?\b(tpm,?)\b/\1\2/;s/,([ \s$])/\1/;}' $GRUBFILE
+    update-grub
+    echo "Removed 'tpm' from blacklist; rebooting to apply the changes ..."
+    sleep 10 && reboot && exit 1
+fi
+if ! lsmod | grep -q '^tpm\b'; then
+    # At this point, tpm is not blacklisted. But if it is also not loaded. Back out for a manual check.
+    echo "WARNING: 'tpm' is not in module_blacklist in ${GRUBFILE}, but is also not loaded."
+    echo "Please manually check the ${GRUBFILE} and run `sudo update-grub`."
+    read && exit 1
 fi
 
 # Encrypt swap.
