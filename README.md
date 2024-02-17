@@ -97,6 +97,7 @@ The set up process is generally safe. However, please understand the process fir
 NOTE: After you have done this once, every time Steam OS updates you will need to run only step 2 above.
 
 ## Step 1: Create an encrypted container, and copy your home to it
+This is required only one time, to create the filesystem container for your encrypted home.
 
 Run the lines below as root.
 
@@ -108,14 +109,14 @@ cd /home
 # Choose a size depending on your SSD.
 # This will replace your home, which will contain entire steam installation,
 # and games that you install in the SSD.
-# This can be increased (or even decreased); but those operations require expertise.
-# So try to choose a size that will serve you for a long time.
-# I chose 750G for a 1TB.
+# Try to choose a size that will serve you for a long time.
+# I chose 750G for a 1TB SSD.
+# Note: This can be increased (or even decreased) wthout loss; but that requires some expertise.
 fallocate -l 750G ./container
 cryptsetup luksFormat ./container
 cryptsetup open ./container deck_alt
 
-# You can choose btrfs too, if you want.
+# Note: If you want btrfs, use `mkfs.btrfs ...` instead; and ignore the `tune2fs` line.
 mkfs.ext4 /dev/mapper/deck_alt
 tune2fs -m 1 /dev/mapper/deck_alt
 
@@ -141,25 +142,27 @@ The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the co
 #!/bin/bash
 set -uexo pipefail
 
-# Steam OS update will add tpm to module_blacklist, but that prevents encryption.
-# This block checks for it, and if present, automatically removes it and updates grub.
+# After this is done, you can `sudo systemctl disable NetworkManager` to prevent Steam from
+# updating the Steam binary in container (only required for keyboard) during boot.
+# Line below starts it if it is disabled.
+systemctl start NetworkManager
+
+# Steam OS has tpm in kernel module_blacklist, but that prevents encryption.
+# Here we check it, and if present, automatically removes it and updates grub.
 readonly GRUBFILE=/etc/default/grub
 readonly TPM_BLACKLIST_REGEX='^\s*GRUB_CMDLINE_LINUX_DEFAULT\b.*\bmodule_blacklist=[^\s]*,?tpm,?\s*\b'
 if grep -E -q "${TPM_BLACKLIST_REGEX}" $GRUBFILE; then
-    echo "'tpm' module is blacklisted, editing ${GRUBFILE}."
+    echo "tpm is blacklisted in ${GRUBFILE}, editing to remove."
     cp ${GRUBFILE} ~deck/grub_original_backup
     sed -E -i "/${TPM_BLACKLIST_REGEX}/"\
 '{h;s/^/# Modified from: /p;x;'\
 's/(module_blacklist=)([^\s]*)?\b(tpm,?)\b/\1\2/;s/,([ \s$])/\1/;}' $GRUBFILE
-    update-grub
-    echo "Removed 'tpm' from blacklist; rebooting to apply the changes ..."
-    sleep 10 && reboot && exit 1
 fi
+# Steam update images appear to always have tpm blacklisted. If so, we need to update-grub.
 if ! lsmod | grep -q '^tpm\b'; then
-    # At this point, tpm is not blacklisted. But if it is also not loaded. Back out for a manual check.
-    echo "WARNING: 'tpm' is not in module_blacklist in ${GRUBFILE}, but is also not loaded."
-    echo "Please manually check the ${GRUBFILE} and run `sudo update-grub`."
-    read && exit 1
+    update-grub
+    echo "PRESS ENTER TO REBOOT. This should happen only once after OS update."
+    read && reboot && exit 1
 fi
 
 # Encrypt swap.
@@ -291,7 +294,8 @@ sudo chmod 600 /home/swapfile
 # Post Encryption
 
 Every time you get a SteamOS update, you need to do the following -
-- Run: `sudo upgrade-grub` from a console in Desktop mode before you unlock, and reboot.
+- ~~Run: `sudo upgrade-grub` from a console in Desktop mode before you unlock, and reboot.~~
+  - Update (202402): No longer needed as this is part of the script now.
   - Explanation why:
     - Without this, unlocking will not succeed since SteamOS needs to load the tpm module.
     - (Development TODO: This step can be removed; I need to chage the script to check if upgrade is needed, and if so then do it.)
