@@ -150,6 +150,7 @@ systemctl start NetworkManager
 # Steam OS has tpm in kernel module_blacklist, but that prevents encryption.
 # Here we check it, and if present, automatically removes it and updates grub.
 readonly GRUBFILE=/etc/default/grub
+# Note: If you change this REGEX, change the tests/tpm_removal and run it to check that it works.
 readonly TPM_BLACKLIST_REGEX='^\s*GRUB_CMDLINE_LINUX_DEFAULT\b.*\bmodule_blacklist=[^\s]*,?tpm,?\s*\b'
 if grep -E -q "${TPM_BLACKLIST_REGEX}" $GRUBFILE; then
     echo "tpm is blacklisted in ${GRUBFILE}, editing to remove."
@@ -178,7 +179,7 @@ fi
 # Unlock home. This will ask for the decryption password.
 cryptsetup open /home/container deck_alt - --allow-discards
 
-# Change /home/deck with the unlocked container.
+# Point /home/deck to the unlocked container.
 mount /dev/mapper/deck_alt /home/deck
 
 # Run optional root autostart script if present.
@@ -219,7 +220,7 @@ mkdir -p $ORIGINAL_HOME
 mount --bind /home $ORIGINAL_HOME
 ln -s $ORIGINAL_HOME/deck $(dirname $ORIGINAL_HOME)/_deck_orig
 
-# Restarts gamescope compositor and steam.
+# Restart gamescope compositor and steam.
 systemctl restart sddm
 ```
 
