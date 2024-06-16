@@ -292,6 +292,39 @@ sudo chmod 600 /home/swapfile
 
 - Only if you ever revert encryption, run `sudo mkswap /home/swapfile` to let the unencrypted swapfile to be used again.
 
+### Step 3C. Optional Startup Files
+
+You can add the following two files in the encrypted container, which will be executed on startup -
+
+| Startup File | Purpose |
+|---|---|
+| `/home/deck/on_decrypt_root.sh` | Will run as root after a successful unlock. Must be owned by root, and have attribute `744` to deter malicious or unintended edits. |
+| `/home/deck/on_decrypt_user.sh` | Will run as user after a successful unlock. Good place for starting user services. |
+
+For example, if you use [Decky Loader](https://decky.xyz/), you can place this
+in `/home/deck/on_decrypt_root.sh` after you have unlocked your decrypted
+container -
+
+```sh
+#!/bin/bash
+
+# This is run when the home directory is decrypted.
+
+set -uexo pipefail
+
+# Decky loader service.
+if [[ -f /etc/systemd/system/plugin_loader.service ]]; then
+  systemctl start plugin_loader
+fi
+```
+
+Change ownership and permissions to prevent malicious or unintended edits -
+
+```sh
+sudo chown root:root /home/deck/on_decrypt_root.sh
+sudo chmod 744 /home/deck/on_decrypt_root.sh
+```
+
 # Post Encryption
 
 Every time you get a SteamOS update, you need to do the following -
