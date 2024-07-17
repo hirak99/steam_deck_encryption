@@ -142,9 +142,9 @@ The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the co
 #!/bin/bash
 set -uexo pipefail
 
-# After this is done, you can `sudo systemctl disable NetworkManager` to prevent Steam from
-# updating the Steam binary in container (only required for keyboard) during boot.
-# Line below starts it if it is disabled.
+# (Optional) If you want, you can disable networking on your host container with
+# `sudo systemctl disable NetworkManager`.
+# If you do that, the line below is important, otherwise it is harmless and safe to keep.
 systemctl start NetworkManager
 
 # Steam OS has tpm in kernel module_blacklist, but that prevents encryption.
@@ -350,6 +350,29 @@ As a result, this way of encrypting may be a viable option for Steam to roll out
   - The need to click on the unlock script manually may be removed if Steam UI can always show it when the disk is encrypted.
 - Add TPM support
   - The unlock prompt may be skipped altogether. Note that I think this is less secure, and I personally prefer to type in my own password, and will not use this.
+
+## Optional: Maintain a single copy of Steam binaries
+
+Difficulty: Veteran. Try only if you are a veteran linux user, or want to learn
+about internals and understand what this will do.
+
+If you want, you can use a single Steam binaries directory.
+
+You will need to move and mount bind the following files from `~/.local/share/Steam`. Note that the list is likely incomplete, and if so some information from your login, e.g. your Steam ID, may leak.
+
+| File / Directory Name | Purpose |
+|---|---|
+| local.vdf | Your login cache. |
+| userdata/ | Your Steam UI configurations. |
+| steamapps/ | Your Steam games, and saves. |
+
+Advantages -
+- Client updates happen only once.
+- A little bit of space is saved.
+
+Disadvantages -
+- There is possibility of leakage of user data from unknown internal Steam directories.
+- There is possibility of breakage if Steam changes the structure of the directories.
 
 # FAQ
 
