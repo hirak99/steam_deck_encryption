@@ -55,14 +55,21 @@ I recommend going there to watch the video, because the video is very much repre
 1. **Issue: Needs a throwaway account** so that we get access to Steam UI's
    on-screen keyboard, to type the password needed to mount the encrypted
    container.
+   - *Unresolved - please let me know if you have a good solution. Below are a few options.*
+   - Option 1: We can log on to KDE instead of GameScope by default.
+   - Option 2: We can set the default to log on to a terminal. It is easy for me to write a terminal-based password-entry which only uses the gamepad.
+   - Option 3: A part of the problem is having to maintain two copies of Steam taking up space. This now has an experimental fix (see Issue 4 below).
 2. ~~**Issue: Trim does not work yet** on the encrypted container. This may be
    an issue which will be fixed with the new kernel, see
    https://github.com/ValveSoftware/SteamOS/issues/1101~~
-3. **Issue: User services and services with binary in home do not start**. As a
-   workaround, the services can be started using the `~/home/on_decrypt_user.sh`
-   and `~/home/on_decrypt_root.sh` (e.g. plugin_loader). A possible future
-   solution could be to retry all the failed services after the container is
+   - Update: The Linux Kernel was updated since the observation. Confirmed that trim works now.
+3. **Issue: User services and services with binary in home do not start**.
+   - As a workaround, the services can be started using the `~/home/on_decrypt_user.sh`
+   and `~/home/on_decrypt_root.sh` (e.g. plugin_loader).
+   - A possible future solution could be to retry all the failed services after the container is
    decrypted.
+4. **Issue: Need to keep 2 copies of Steam**
+   - See experimental fix.
 
 # Before you start
 
@@ -353,22 +360,38 @@ As a result, this way of encrypting may be a viable option for Steam to roll out
 
 ## Optional: Maintain a single copy of Steam binaries
 
-Difficulty: Veteran. Try only if you are a veteran linux user, or want to learn
-about internals and understand what this will do.
+**Status: Experimental.** Although it should be easy enough to revert and resolve any issues, try it only if you understand the risks and are comfortable with debugging alone.
 
-If you want, you can use a single Steam binaries directory.
+Run the following, after you have mounted the encrypted container.
 
-You will need to move and mount bind the following files from `~/.local/share/Steam`. Note that the list is likely incomplete, and if so some information from your login, e.g. your Steam ID, may leak.
+Note: I am running an equivalent of the following script, though I did not test the script exactly.
 
-| File / Directory Name | Purpose |
-|---|---|
-| local.vdf | Your login cache. |
-| userdata/ | Your Steam UI configurations. |
-| steamapps/ | Your Steam games, and saves. |
+```sh
+ORIGINAL_HOME=/run/mount/_home_dirs_orig
+
+cd $ORIGINAL_HOME
+mkdir steam_user_files
+mv .local/share/Steam/{*.vdf,config,userdata,logs,steamapps} steam_user_files
+
+# Move and link your files.
+mkdir ~/steam_user_files
+cd ~/.local/share/Steam
+mv *.vdf config userdata logs steamapps ~/steam_user_files
+
+# Move Steam, and re-use from unencrypted location.
+cd ~/.local/share
+# Note: You can delete Steam_bak after you confirm this works.
+mv Steam Steam_bak
+
+# Now link the moved files. Note that we *do not* need to link separately for $ORIGINAL_HOME.
+ln -s /home/deck/steam_user_files/* ~/.local/share/Steam/
+```
+
+After this is confirmed to work, you can delete `~/.local/share/Steam_bak`.
 
 Advantages -
 - Client updates happen only once.
-- A little bit of space is saved.
+- Space and bandwidth for update will be conserved.
 
 Disadvantages -
 - There is possibility of leakage of user data from unknown internal Steam directories.
