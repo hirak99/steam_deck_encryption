@@ -167,11 +167,13 @@ if grep -E -q "${TPM_BLACKLIST_REGEX}" $GRUBFILE; then
 's/(module_blacklist=)([^\s]*)?\b(tpm,?)\b/\1\2/;s/,([ \s$])/\1/;}' $GRUBFILE
 fi
 # Steam update images appear to always have tpm blacklisted. If so, we need to update-grub.
+set +o pipefail  # Disable pipefail temporarily for grep -q to work.
 if ! lsmod | grep -q '^tpm\b'; then
     update-grub
     echo "PRESS ENTER TO REBOOT. This should happen only once after OS update."
     read && reboot && exit 1
 fi
+set -o pipefail
 
 # Encrypt swap.
 # Note: After this is run once, swap will not mount for the unencrypted partition.
