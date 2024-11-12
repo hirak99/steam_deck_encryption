@@ -141,10 +141,11 @@ rsync -aAXHSv /home/deck/ /run/mount/deck_alt/
 
 Add these scripts to your current (non-encrypted) home -
 
-### Create ~/unlocker/runasroot.sh
+### Create ~/unlocker/part1.sh & part2.sh
 
-The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the container and replace your `home/deck` with an the encrypted filesystem.
+The idea is to run `sudo ~/unlocker/part1.sh` on every boot to unlock the container and replace your `home/deck` with an the encrypted filesystem.
 
+`~/unlocker/part1.sh` - Interactive part. Ask for password and open the decrypted container.
 ```sh
 #!/bin/bash
 set -uexo pipefail
@@ -164,6 +165,19 @@ cryptsetup open /home/container deck_alt - --allow-discards
 
 # Point /home/deck to the unlocked container.
 mount /dev/mapper/deck_alt /home/deck
+
+readonly MY_PATH=$(realpath $(dirname "$0"))
+systemd-run /usr/bin/bash "$MY_PATH"/part2.sh
+```
+
+`~/unlocker/part2.sh` - Non interactive part. Shutdown steam, mount the opened container, restart steam.
+```sh
+#!/bin/bash
+set -uexo pipefail
+
+# Shutdown steam before mounting the new path.
+killall steam
+systemctl stop sddm
 
 # Run optional root autostart script if present.
 # This can be used for example to automatically unlock and mount sdcard with a keyfile.
@@ -217,9 +231,8 @@ This is to add a wrapper to show terminal on Steam deck, which you'll need to ty
 
 set -uexo pipefail
 
-readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
-xterm -e "sudo $SCRIPT_DIR/runasroot.sh"
+readonly MY_PATH=$(realpath $(dirname "$0"))
+xterm -e "sudo $MY_PATH/part1.sh"
 ```
 
 Add this to Steam as a shortcut.
