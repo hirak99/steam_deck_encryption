@@ -149,11 +149,6 @@ The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the co
 #!/bin/bash
 set -uexo pipefail
 
-# (Optional) If you want, you can disable networking on your host container with
-# `sudo systemctl disable NetworkManager`.
-# If you do that, the line below is important, otherwise it is harmless and safe to keep.
-systemctl start NetworkManager
-
 # Steam OS has tpm in kernel module_blacklist, but that prevents encryption.
 # Here we check it, and if present, automatically removes it and updates grub.
 readonly GRUBFILE=/etc/default/grub
