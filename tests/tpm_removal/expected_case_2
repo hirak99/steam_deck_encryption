@@ -1,2 +1,0 @@
-# Modified from: GRUB_CMDLINE_LINUX_DEFAULT="plymouth.ignore-serial-consoles tsc=directsync module_blacklist=x,tpm log_buf_len=4M amd_iommu=off amdgpu.gttsize=8128 spi_amd.speed_dev=1 audit=0 fbcon=vc:4-6"
-GRUB_CMDLINE_LINUX_DEFAULT="plymouth.ignore-serial-consoles tsc=directsync module_blacklist=x log_buf_len=4M amd_iommu=off amdgpu.gttsize=8128 spi_amd.speed_dev=1 audit=0 fbcon=vc:4-6"

@@ -149,27 +149,6 @@ The idea is to run `sudo ~/unlocker/runasroot.sh` on every boot to unlock the co
 #!/bin/bash
 set -uexo pipefail
 
-# Steam OS has tpm in kernel module_blacklist, but that prevents encryption.
-# Here we check it, and if present, automatically removes it and updates grub.
-readonly GRUBFILE=/etc/default/grub
-# Note: If you change this REGEX, change the tests/tpm_removal and run it to check that it works.
-readonly TPM_BLACKLIST_REGEX='^\s*GRUB_CMDLINE_LINUX_DEFAULT\b.*\bmodule_blacklist=[^\s]*,?tpm,?\s*\b'
-if grep -E -q "${TPM_BLACKLIST_REGEX}" $GRUBFILE; then
-    echo "tpm is blacklisted in ${GRUBFILE}, editing to remove."
-    cp ${GRUBFILE} ~deck/grub_original_backup
-    sed -E -i "/${TPM_BLACKLIST_REGEX}/"\
-'{h;s/^/# Modified from: /p;x;'\
-'s/(module_blacklist=)([^\s]*)?\b(tpm,?)\b/\1\2/;s/,([ \s$])/\1/;}' $GRUBFILE
-fi
-# Steam update images appear to always have tpm blacklisted. If so, we need to update-grub.
-set +o pipefail  # Disable pipefail temporarily for grep -q to work.
-if ! lsmod | grep -q '^tpm\b'; then
-    update-grub
-    echo "PRESS ENTER TO REBOOT. This should happen only once after OS update."
-    read && reboot && exit 1
-fi
-set -o pipefail
-
 # Encrypt swap.
 # Note: After this is run once, swap will not mount for the unencrypted partition.
 # To revert, simply execute `mkswap /home/swapfile`.
@@ -334,9 +313,7 @@ sudo chmod 744 /home/deck/on_decrypt_root.sh
 Every time you get a SteamOS update, you need to do the following -
 - ~~Run: `sudo upgrade-grub` from a console in Desktop mode before you unlock, and reboot.~~
   - Update (202402): No longer needed as this is part of the script now.
-  - Explanation why:
-    - Without this, unlocking will not succeed since SteamOS needs to load the tpm module.
-    - (Development TODO: This step can be removed; I need to chage the script to check if upgrade is needed, and if so then do it.)
+  - Update (202411): No longer needed as Steam does not blacklist tpm anymore.
 
 # Conclusion: Status & Future
 
