@@ -176,8 +176,10 @@ systemd-run /usr/bin/bash "$MY_PATH"/part2.sh
 set -uexo pipefail
 
 # Shutdown steam before mounting the new path.
+readonly SDDM_PID=$(pgrep -o sddm)
+kill -STOP $SDDM_PID  # Pause SDDM so it does not immediately reload steam.
 killall steam
-systemctl stop sddm
+pidwait steam
 
 # Run optional root autostart script if present.
 # This can be used for example to automatically unlock and mount sdcard with a keyfile.
@@ -217,8 +219,8 @@ mkdir -p $ORIGINAL_HOME
 mount --bind /home $ORIGINAL_HOME
 ln -s $ORIGINAL_HOME/deck $(dirname $ORIGINAL_HOME)/_deck_orig
 
-# Restart gamescope compositor and steam.
-systemctl restart sddm
+# Allow sddm to continue, and restart Steam.
+kill -CONT $SDDM_PID
 ```
 
 ### Create ~/unlocker/unlock.sh
