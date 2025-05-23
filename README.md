@@ -96,13 +96,6 @@ Up until the point where you choose to erase data from unencrypted partition, th
 
 The set up process is generally safe. However, please understand the process first before going through it.
 
-## Step 0: Unblacklist tpm
-
-1. Remove `blackist=tpm` from /etc/default/grub. This is needed to be able to use encryption with LUKS.
-2. Run `sudo update-grub` and reboot.
-
-NOTE: After you have done this once, every time Steam OS updates you will need to run only step 2 above.
-
 ## Step 1: Create an encrypted container, and copy your home to it
 This is required only one time, to create the filesystem container for your encrypted home.
 
@@ -163,9 +156,6 @@ fi
 # Unlock home. This will ask for the decryption password.
 cryptsetup open /home/container deck_alt - --allow-discards
 
-# Point /home/deck to the unlocked container.
-mount /dev/mapper/deck_alt /home/deck
-
 readonly MY_PATH=$(realpath $(dirname "$0"))
 systemd-run /usr/bin/bash "$MY_PATH"/part2.sh
 ```
@@ -180,6 +170,9 @@ readonly SDDM_PID=$(pgrep -o sddm)
 kill -STOP $SDDM_PID  # Pause SDDM so it does not immediately reload steam.
 killall steam
 pidwait steam
+
+# Point /home/deck to the unlocked container.
+mount /dev/mapper/deck_alt /home/deck
 
 # Run optional root autostart script if present.
 # This can be used for example to automatically unlock and mount sdcard with a keyfile.
