@@ -1,3 +1,6 @@
+>[!IMPORTANT]
+> _Valve is working on an official solution, [see this comment](https://github.com/hirak99/steam_deck_encryption/issues/13). To encrypt a new deck, you may want to use it instead._
+
 # What you'll get
 
 This is a guide intended for anyone who wants to encrypt their Steam Deck.
